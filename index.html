@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d6e8a">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Ticket Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one instruction fills the screen. Everything else is behind a link. */
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --fg:#14171c; --dim:#5d656f; --faint:#949ba5;
+  --line:#dde0e5; --accent:#0d6e8a; --accent-ink:#ffffff;
+  --go:#17724a; --go-bg:#e4f4ea; --warn:#8d5c05; --warn-bg:#fdf1da;
+  --stop:#9f332a; --stop-bg:#fae9e7;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1215; --card:#191d22; --fg:#e9ebee; --dim:#9ba3ad; --faint:#69727d;
+  --line:#2b3138; --accent:#4fbcda; --accent-ink:#06222c;
+  --go:#52c689; --go-bg:#112d1f; --warn:#e2a63c; --warn-bg:#2f2513;
+  --stop:#ea7870; --stop-bg:#331b19; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1215; --card:#191d22; --fg:#e9ebee; --dim:#9ba3ad; --faint:#69727d;
+  --line:#2b3138; --accent:#4fbcda; --accent-ink:#06222c;
+  --go:#52c689; --go-bg:#112d1f; --warn:#e2a63c; --warn-bg:#2f2513;
+  --stop:#ea7870; --stop-bg:#331b19; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);margin:0;line-height:1.55}
+.wrap{max-width:540px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px 48px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;
+  font-family:var(--mono);font-size:.78rem;color:var(--dim)}
+.bar a{color:var(--accent);text-decoration:none;cursor:pointer;font-family:var(--sans)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.kind{font-family:var(--mono);font-size:.74rem;font-weight:600;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--accent)}
+.card.go .kind{color:var(--go)} .card.go{background:var(--go-bg);border-color:var(--go)}
+.card.warn .kind{color:var(--warn)} .card.warn{background:var(--warn-bg);border-color:var(--warn)}
+.card.done{text-align:center}
+h1{font-size:1.5rem;font-weight:600;margin:8px 0 0;letter-spacing:-.015em;text-wrap:balance}
+.sub{font-family:var(--mono);font-size:.84rem;color:var(--dim);margin-top:6px}
+.say{font-size:1rem;margin-top:16px}
+.say b{font-family:var(--mono);font-weight:600}
+.facts{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:7px}
+.f{display:flex;justify-content:space-between;gap:12px;font-size:.92rem}
+.f span:first-child{color:var(--dim)}
+.f span:last-child{font-family:var(--mono);font-weight:600;text-align:right}
+.ask{margin-top:18px}
+.ask label{display:block;font-size:.88rem;color:var(--dim);margin-bottom:7px}
+input{font-family:var(--mono);font-size:1.15rem;padding:12px 14px;width:100%;
+  border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--fg)}
+button{font-family:var(--sans);font-size:1rem;font-weight:600;padding:14px 20px;width:100%;
+  margin-top:12px;border-radius:9px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.flat{background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:500;font-size:.9rem;padding:10px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.left{margin-top:14px;text-align:center;font-size:.86rem;color:var(--faint)}
+.alert{border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:.92rem;
+  background:var(--stop-bg);border:1px solid var(--stop)}
+.alert b{display:block;margin-bottom:3px}
+
+#more{margin-top:18px}
+#more[hidden]{display:none}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:10px}
+.panel h2{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:.9rem}
+.kv span:nth-child(even){font-family:var(--mono);font-weight:600;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:4px}
+th{text-align:left;font-size:.68rem;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;
+  padding:0 6px 6px 0;border-bottom:1px solid var(--line)}
+td{padding:6px 6px 6px 0;border-bottom:1px solid var(--line);font-family:var(--mono)}
+.setup{display:grid;gap:8px;margin-top:4px}
+.setup label{font-size:.85rem;color:var(--dim)}
+.setup input{font-size:1rem}
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <span id="where">—</span>
+    <span><a id="undo" hidden>↩ undo last</a> &nbsp;&nbsp; <a id="toggle">details</a></span>
+  </div>
+  <div id="alert"></div>
+  <div id="stage"></div>
+  <div id="more" hidden></div>
+</div>
+
+<script>
+var INIT=5000, FLOOR=4850, TARGET=5450, TICKET=20, GROSS=62.5, NET=50,
+    STOP=0.02, LOSS=1.03, WIN=2.97, MINR=5, DEPLOY=0.40,
+    BUILD=120, CAPNEED=941, PACE=4, PACE_END=45;
+var MK=[["AVAXUSDT",2],["SOLUSDT",2],["DOGEUSDT",2],["ADAUSDT",2],["XRPUSDT",4],["NATGAS",2]];
+
+var S={start:null,cash:450,acc:[],bought:0,passed:0,paid:0,seq:0};
+var s_idx=0;
+var ref=null, seen="", openMore=false, undoStack=[], editing=null, armed=false;
+function keepUndo(){ try{localStorage.setItem("nextstep_undo",JSON.stringify(undoStack))}catch(e){} }
+function snap(){ undoStack.push(JSON.stringify({start:S.start,cash:S.cash,acc:S.acc,
+  bought:S.bought,passed:S.passed,paid:S.paid,seq:S.seq}));
+  if(undoStack.length>30) undoStack.shift(); keepUndo() }
+function undo(){ if(!undoStack.length) return; var p=JSON.parse(undoStack.pop());
+  keepUndo(); for(var k in p) S[k]=p[k]; save() }
+
+function norm(p){
+  var o={};
+  o.start = (typeof p.start==="string" && p.start) ? p.start : null;
+  o.cash  = Number(p.cash);  if(!isFinite(o.cash)) o.cash=0;
+  o.bought= Number(p.bought)||0; o.passed=Number(p.passed)||0;
+  o.paid  = Number(p.paid)||0;   o.seq=Number(p.seq)||0;
+  var raw = p.acc;
+  if(!raw) raw=[];
+  if(!Array.isArray(raw)){                      /* object-with-number-keys */
+    var out=[]; for(var k in raw) out.push(raw[k]); raw=out;
+  }
+  o.acc = raw.filter(function(a){return a&&typeof a==="object"}).map(function(a){
+    return {n:Number(a.n)||0,
+            market:(typeof a.market==="string"&&a.market)?a.market:MK[0][0],
+            bal:isFinite(Number(a.bal))?Number(a.bal):INIT,
+            funded:!!a.funded, dead:!!a.dead,
+            opened:(typeof a.opened==="string"&&a.opened)?a.opened:null,
+            flip:(typeof a.flip==="string"&&a.flip)?a.flip:"BUY (go long)",
+            buyday:(typeof a.buyday==="string"&&a.buyday)?a.buyday:null,
+            entry:isFinite(Number(a.entry))?Number(a.entry):undefined};
+  });
+  if(!o.seq) o.acc.forEach(function(a){ if(a.n>o.seq) o.seq=a.n });
+  return o;
+}
+function today(){return new Date().toISOString().slice(0,10)}
+function day(){return S.start?Math.floor((Date.parse(today())-Date.parse(S.start))/864e5)+1:1}
+function alive(){return S.acc.filter(function(a){return !a.dead})}
+function total(){return S.cash+alive().length*TICKET}
+function usd(n){return "$"+Math.round(n).toLocaleString("en-US")}
+function usd2(n){return "$"+n.toFixed(2)}
+function hold(m){for(var i=0;i<MK.length;i++)if(MK[i][0]===m)return MK[i][1];return 2}
+function get(id){for(var i=0;i<S.acc.length;i++)if(S.acc[i].n===id)return S.acc[i];return null}
+
+function size(a){
+  var room=(a.bal-FLOOR)*0.999/LOSS;
+  var need=a.funded ? GROSS-(a.bal-INIT) : TARGET-a.bal;
+  if(need<=0) return 0;
+  var r=Math.min(room,need/WIN);
+  return r<MINR ? -1 : r/STOP;
+}
+function overdue(a){
+  if(!a.opened) return false;
+  return Date.now() >= Date.parse(a.opened)+hold(a.market)*864e5;
+}
+
+/* the queue — ordered exactly as the plan says to work */
+function queue(){
+  var q=[];
+  alive().forEach(function(a){ if(a.opened&&overdue(a)) q.push({t:"close",a:a}) });
+  alive().forEach(function(a){ if(!a.opened&&!a.funded&&a.bal>=TARGET) q.push({t:"pass",a:a}) });
+  alive().forEach(function(a){ if(!a.opened&&a.funded&&(a.bal-INIT)>=GROSS) q.push({t:"cash",a:a}) });
+  alive().forEach(function(a){ if(!a.opened&&size(a)>0) q.push({t:"trade",a:a}) });
+
+  var committed=alive().length*TICKET;
+  var budget=Math.max(0,total()*DEPLOY-committed);
+  var left=(day()<=PACE_END?PACE:99)-S.acc.filter(function(a){return a.buyday===today()}).length;
+  var n=Math.min(Math.floor(budget/TICKET),Math.max(0,left),Math.floor(S.cash/TICKET));
+  if(n>0) q.push({t:"buy",n:n});
+  return q;
+}
+
+function card(cls,kind,head,sub,say,facts,ask,btn,act){
+  var h='<div class="card '+cls+'"><div class="kind">'+kind+'</div><h1>'+head+'</h1>';
+  if(sub) h+='<div class="sub">'+sub+'</div>';
+  if(say) h+='<div class="say">'+say+'</div>';
+  if(facts){h+='<div class="facts">';
+    facts.forEach(function(f){h+='<div class="f"><span>'+f[0]+'</span><span>'+f[1]+'</span></div>'});
+    h+='</div>'}
+  if(ask) h+='<div class="ask"><label for="x">'+ask+'</label>'+
+    '<input type="number" step="any" id="x" inputmode="decimal"></div>';
+  h+='<button id="go" data-act="'+act+'">'+btn+'</button></div>';
+  return h;
+}
+
+function draw(){
+  var d=day(), q=queue();
+  var ub=document.getElementById("undo"); ub.hidden = undoStack.length===0;
+  document.getElementById("where").textContent =
+    S.start ? ("Day "+d+"  ·  "+alive().length+" accounts  ·  "+usd(S.cash)+" cash")
+            : "Not started";
+
+  /* tripwire */
+  var done=S.acc.filter(function(a){return a.dead||a.funded}).length;
+  document.getElementById("alert").innerHTML =
+    (done>=40 && S.passed<6)
+      ? '<div class="alert"><b>Stop buying new accounts.</b>Only '+S.passed+
+        ' of '+done+' finished accounts passed. That is fewer than luck explains. '+
+        'Something is wrong — ask Claude before spending more.</div>' : "";
+
+  var el=document.getElementById("stage"), h="";
+
+  if(!S.start){
+    h='<div class="card"><div class="kind">First time</div>'+
+      '<h1>Start the plan</h1>'+
+      '<div class="say">This will tell you one thing to do at a time. '+
+      'Nothing else. Come back once a day.</div>'+
+      '<div class="setup"><label for="m">How much money are you starting with?</label>'+
+      '<input type="number" id="m" value="450"></div>'+
+      '<button id="go" data-act="init">Start</button></div>';
+  }
+  else if(!q.length){
+    h='<div class="card done"><div class="kind">Nothing to do</div>'+
+      '<h1>You’re finished for today</h1>'+
+      '<div class="say">Every account has a trade running with time left on it. '+
+      'Close this and come back tomorrow.</div></div>';
+  }
+  else {
+    var o=q[0], a=o.a;
+    if(o.t==="close"){
+      h=card("warn","Step 1 — close","Close this trade now",
+        "Account "+a.n+"  ·  "+a.market,
+        "Its <b>"+hold(a.market)+" days</b> are up. Go to Breakout, close it at market price, "+
+        "then type the balance the account ended with.",
+        null,"Balance after closing","Saved it","bal");
+    }
+    else if(o.t==="pass"){
+      h=card("go","Step 2 — passed","This account passed",
+        "Account "+a.n+"  ·  "+a.market,
+        "Balance is <b>"+usd2(a.bal)+"</b>, over the "+usd(TARGET)+" target. "+
+        "It is a funded account now. Nothing to do on Breakout — just confirm.",
+        null,null,"Got it","pass");
+    }
+    else if(o.t==="cash"){
+      h=card("go","Step 3 — withdraw","Take money out",
+        "Account "+a.n+"  ·  "+a.market,
+        "This account has <b>"+usd2(a.bal-INIT)+"</b> profit. Request a payout on Breakout. "+
+        "You receive <b>"+usd(NET)+"</b>.",
+        [["Request","$62.50 gross"],["You get",usd(NET)],
+         ["Balance after",usd2(a.bal-GROSS)]],
+        null,"Withdrawn","cash");
+    }
+    else if(o.t==="trade"){
+      var sz=size(a);
+      h=card("","Step 4 — trade","Place one trade",
+        "Account "+a.n+"  ·  "+a.market,
+        "Flip a coin, or use the one below. Then place the order with a stop and a target.",
+        [["Market",a.market],["Direction",a.flip],["Size",usd(sz)+" worth"],
+         ["Stop loss","2% away"],["Take profit","6% away"],
+         ["Close by if neither hits",hold(a.market)+" days"]],
+        "Price you got filled at","Placed it","open");
+    }
+    else {
+      h=card("","Step 5 — buy","Buy up to "+o.n+" new account"+(o.n>1?"s":""),
+        null,
+        "On Breakout, buy 1-Step Turbo $5,000 accounts at <b>$20</b> each. "+
+        "You can afford <b>"+o.n+"</b> today. Buying fewer is always fine — "+
+        "then tell me how many you actually bought.",
+        [["Each costs","$20"],["All "+o.n+" would cost",usd(o.n*TICKET)],
+         ["Cash you have",usd(S.cash)]],
+        null,"I bought all "+o.n,"buy|"+o.n);
+      if(o.n>1){
+        var extra="";
+        for(var k=o.n-1;k>=1;k--)
+          extra+='<button class="flat" data-act="buy|'+k+'">I bought only '+k+'</button>';
+        s_idx=h.lastIndexOf("</div>");
+        h=h.slice(0,s_idx)+extra+h.slice(s_idx);
+      }
+    }
+    if(q.length>1) h+='<div class="left">'+(q.length-1)+' more after this</div>';
+  }
+  el.innerHTML=h;
+
+  /* details panel */
+  var m=document.getElementById("more");
+  m.hidden=!openMore;
+  if(openMore){
+    var prog=Math.min(d/BUILD,total()/CAPNEED)*100;
+    var rows=S.acc.slice().reverse().slice(0,25).map(function(a){
+      return "<tr data-ed=\""+a.n+"\" style=\"cursor:pointer\"><td>"+a.n+"</td><td>"+a.market+
+        "</td><td>"+(a.dead?"dead":a.funded?"funded":"testing")+"</td><td>"+
+        (a.dead?"—":usd2(a.bal))+"</td><td style=\"color:var(--accent)\">edit</td></tr>"}).join("");
+    m.innerHTML='<div class="panel"><h2>Where you are</h2><div class="kv">'+
+      "<span>Progress to $2,000/month</span><span>"+prog.toFixed(0)+"%</span>"+
+      "<span>Total money</span><span>"+usd(total())+"</span>"+
+      "<span>Cash not in use</span><span>"+usd(S.cash)+"</span>"+
+      "<span>Accounts alive</span><span>"+alive().length+"</span>"+
+      "<span>Bought / passed</span><span>"+S.bought+" / "+S.passed+"</span>"+
+      "<span>Withdrawn so far</span><span>"+usd(S.paid)+"</span>"+
+      '</div></div><div class="panel"><h2>Accounts</h2><table>'+
+      "<tr><th>#</th><th>Market</th><th>State</th><th>Balance</th><th></th></tr>"+
+      (rows||'<tr><td colspan="4">none yet</td></tr>')+"</table></div>"+
+      (editing?editPanel():"")+
+      '<div class="panel"><h2>Fix a mistake</h2><div class="setup">'+
+      '<label for="fc">Cash not in use ($)</label><input type="number" id="fc" value="'+
+      Math.round(S.cash)+'"><button class="flat" id="fixc">Correct it</button></div></div>'+
+      '<div class="panel"><h2>Backup</h2>'+
+      '<div style="font-size:.88rem;color:var(--dim);margin-bottom:8px">'+
+      'This page keeps your data in this browser only. Copy this text somewhere safe '+
+      '(message it to yourself) so you can restore it on another device or if this '+
+      'browser is ever cleared.</div>'+
+      '<textarea id="bk" readonly style="width:100%;height:80px;font-family:var(--mono);'+
+      'font-size:.72rem;padding:10px;border:1px solid var(--line);border-radius:9px;'+
+      'background:var(--bg);color:var(--fg)">'+
+      JSON.stringify({start:S.start,cash:S.cash,acc:S.acc,bought:S.bought,
+                      passed:S.passed,paid:S.paid,seq:S.seq})+'</textarea>'+
+      '<button class="flat" id="copybk">Copy backup</button>'+
+      '<div style="font-size:.88rem;color:var(--dim);margin:14px 0 8px">'+
+      'To restore, paste a backup here and tap Restore.</div>'+
+      '<textarea id="rs" placeholder="paste backup text" style="width:100%;height:60px;'+
+      'font-family:var(--mono);font-size:.72rem;padding:10px;border:1px solid var(--line);'+
+      'border-radius:9px;background:var(--bg);color:var(--fg)"></textarea>'+
+      '<button class="flat" id="dorestore">Restore from backup</button></div>'+
+      '<div class="panel"><h2>Start over</h2>'+
+      '<div style="font-size:.88rem;color:var(--dim);margin-bottom:10px">'+
+      (armed
+        ? 'This erases all '+S.acc.length+' accounts and sets you back to the first screen. '+
+          'It cannot be undone. Tap again to confirm.'
+        : 'Wipes every account and returns to the very first screen. Use this if you were only testing.')+
+      '</div><button class="flat" id="reset" style="'+
+      (armed?'border-color:var(--stop);color:var(--stop)':'')+'">'+
+      (armed?'Yes — erase everything':'Start over')+'</button>'+
+      (armed?'<button class="flat" id="noreset" style="margin-top:8px">Cancel</button>':'')+
+      '</div>';
+  }
+}
+
+function editPanel(){
+  var a=get(editing); if(!a) return "";
+  return '<div class="panel"><h2>Account '+a.n+' — '+a.market+'</h2><div class="setup">'+
+    '<label for="eb">Balance</label><input type="number" step="any" id="eb" value="'+
+      (a.dead?"":a.bal)+'">'+
+    '<label for="es">State</label>'+
+    '<select id="es" style="font-family:var(--mono);font-size:1rem;padding:11px;'+
+      'border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--fg)">'+
+      '<option value="testing"'+(!a.dead&&!a.funded?" selected":"")+'>testing</option>'+
+      '<option value="funded"'+(a.funded&&!a.dead?" selected":"")+'>funded</option>'+
+      '<option value="dead"'+(a.dead?" selected":"")+'>dead</option></select>'+
+    '<label for="eo">Trade running?</label>'+
+    '<select id="eo" style="font-family:var(--mono);font-size:1rem;padding:11px;'+
+      'border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--fg)">'+
+      '<option value="no"'+(!a.opened?" selected":"")+'>no — needs a trade</option>'+
+      '<option value="yes"'+(a.opened?" selected":"")+'>yes — leave it running</option></select>'+
+    '<button class="flat" id="esave">Save account '+a.n+'</button>'+
+    '<button class="flat" id="ecancel">Cancel</button></div></div>';
+}
+
+/* ---- actions ---- */
+function flip(){return Math.random()<0.5?"BUY (go long)":"SELL (go short)"}
+function save(){
+  var b={start:S.start,cash:S.cash,acc:S.acc,bought:S.bought,passed:S.passed,paid:S.paid,seq:S.seq};
+  try{localStorage.setItem("nextstep",JSON.stringify(b))}catch(e){}
+  safeDraw();
+}
+function buy(n){
+  snap();
+  for(var i=0;i<n;i++){
+    S.seq++;
+    S.acc.push({n:S.seq,market:MK[(S.seq-1)%MK.length][0],bal:INIT,funded:false,dead:false,
+                opened:null,flip:flip(),buyday:today()});
+    S.cash-=TICKET; S.bought++;
+  }
+  save();
+}
+function setBal(a,v){
+  snap();
+  a.bal=v; a.opened=null; a.flip=flip();
+  if(a.bal<=FLOOR||size(a)<0) a.dead=true;
+  save();
+}
+
+function safeDraw(){
+  try{ draw() }
+  catch(err){
+    document.getElementById("stage").innerHTML =
+      '<div class="card warn"><div class="kind">Something broke</div>'+
+      '<h1>The page hit an error</h1><div class="say">'+String(err.message||err)+
+      '</div><div class="say">Your data is still saved. Open <b>details</b> and use '+
+      '<b>Start over</b> only as a last resort — tell Claude this message first.</div></div>';
+  }
+}
+document.addEventListener("click",function(e){
+  try{ handle(e) }
+  catch(err){
+    document.getElementById("alert").innerHTML =
+      '<div class="alert"><b>That tap failed.</b>'+String(err.message||err)+
+      ' — tell Claude this message.</div>';
+  }
+});
+function handle(e){
+  var t=e.target;
+  if(t.id==="toggle"){openMore=!openMore;editing=null;draw();return}
+  if(t.id==="undo"){undo();return}
+  if(t.id==="noreset"){armed=false;draw();return}
+  if(t.id==="copybk"){
+    var ta=document.getElementById("bk");
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(
+        function(){t.textContent="Copied"},
+        function(){ta.select();t.textContent="Select it and copy"});
+    } else { ta.select(); t.textContent="Select it and copy" }
+    return}
+  if(t.id==="dorestore"){
+    var txt=document.getElementById("rs").value.trim();
+    if(!txt) return;
+    snap(); S=norm(JSON.parse(txt)); editing=null; save(); return}
+  if(t.id==="reset"){
+    if(!armed){armed=true;draw();return}
+    armed=false; undoStack=[]; keepUndo();
+    S={start:null,cash:450,acc:[],bought:0,passed:0,paid:0,seq:0};
+    editing=null; openMore=false; save(); return}
+  var tr=t.closest&&t.closest("tr[data-ed]");
+  if(tr){editing=parseInt(tr.getAttribute("data-ed"),10);draw();return}
+  if(t.id==="ecancel"){editing=null;draw();return}
+  if(t.id==="esave"){
+    var a=get(editing); if(a){
+      snap();
+      var nb=parseFloat(document.getElementById("eb").value);
+      if(!isNaN(nb)) a.bal=nb;
+      var st=document.getElementById("es").value;
+      var wasFunded=a.funded;
+      a.dead=(st==="dead"); a.funded=(st==="funded");
+      if(a.funded&&!wasFunded) S.passed++;
+      if(!a.funded&&wasFunded) S.passed=Math.max(0,S.passed-1);
+      a.opened = document.getElementById("eo").value==="yes"
+        ? (a.opened||new Date().toISOString()) : null;
+      editing=null; save();
+    }
+    return}
+  if(t.id==="fixc"){var v=parseFloat(document.getElementById("fc").value);
+    if(!isNaN(v)){snap();S.cash=v;save()} return}
+  if(!t.getAttribute||!t.getAttribute("data-act")) return;
+  var act=t.getAttribute("data-act"), q=queue(), o=q[0];
+  var x=document.getElementById("x");
+  if(act==="init"){
+    snap();
+    var m=parseFloat(document.getElementById("m").value);
+    S.cash=isNaN(m)?450:m; S.start=today(); save(); return;
+  }
+  if(act.indexOf("buy|")===0){ buy(parseInt(act.split("|")[1],10)); return }
+  if(!o||!o.a) return;
+  if(act==="bal"){ if(x&&x.value) setBal(o.a,parseFloat(x.value)) }
+  else if(act==="pass"){ snap(); o.a.funded=true; S.passed++; save() }
+  else if(act==="cash"){ snap(); o.a.bal-=GROSS; S.cash+=NET; S.paid+=NET;
+    o.a.flip=flip(); if(o.a.bal<=FLOOR) o.a.dead=true; save() }
+  else if(act==="open"){ snap(); o.a.opened=new Date().toISOString();
+    if(x&&x.value) o.a.entry=parseFloat(x.value); save() }
+}
+
+try{var U=localStorage.getItem("nextstep_undo"); if(U) undoStack=JSON.parse(U)}catch(e){}
+try{var L=localStorage.getItem("nextstep"); if(L) S=norm(JSON.parse(L));}catch(e){}
+safeDraw();
+
+/* standalone: all state lives in this browser, plus the backup text below */
+</script>
+
+</body>
+</html>
